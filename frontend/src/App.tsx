@@ -404,6 +404,8 @@ function TrainingArticleCard({ article }: { article: TrainingArticle }) {
 export default function App() {
   const isTutorsPage = window.location.pathname === '/tutors'
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const [isMobileViewport, setIsMobileViewport] = useState(window.innerWidth < 640)
+  const [heroImagesReady, setHeroImagesReady] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [featureStart, setFeatureStart] = useState(0)
   const [mobileFeatureStep, setMobileFeatureStep] = useState(0)
@@ -441,12 +443,38 @@ export default function App() {
   useEffect(() => {
     const onResize = () => {
       setVisibleFeatureCount(window.innerWidth < 768 ? 1 : 3)
+      setIsMobileViewport(window.innerWidth < 640)
     }
 
     onResize()
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setHeroImagesReady(false)
+
+    const mainImageSrc = isMobileViewport ? '/hero-bg-mobile.png' : '/hero-bg.png'
+    const sources = [mainImageSrc, '/hero-small-1.png', '/hero-small-2.png']
+
+    const preload = (src: string) =>
+      new Promise<boolean>((resolve) => {
+        const img = new Image()
+        img.onload = () => resolve(true)
+        img.onerror = () => resolve(false)
+        img.src = src
+      })
+
+    Promise.all(sources.map(preload)).then((results) => {
+      if (cancelled) return
+      setHeroImagesReady(results.every(Boolean))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isMobileViewport])
 
   useEffect(() => {
     if (!isMobileNavOpen) return
@@ -664,34 +692,41 @@ export default function App() {
             </div>
 
             <div className="mt-8 block lg:mt-0">
-              <div className="relative mx-auto w-full max-w-xs aspect-[1/0.95] sm:max-w-sm sm:aspect-[3/4] lg:ml-auto lg:max-w-sm lg:aspect-[3/4] lg:translate-x-24">
-                <picture>
-                  <source media="(max-width: 639px)" srcSet="/hero-bg-mobile.png" />
+              {heroImagesReady ? (
+                <div className="relative mx-auto w-full max-w-none aspect-[1/0.95] sm:max-w-sm sm:aspect-[3/4] lg:ml-auto lg:max-w-sm lg:aspect-[3/4] lg:translate-x-24">
+                  <picture>
+                    <source media="(max-width: 639px)" srcSet="/hero-bg-mobile.png" />
+                    <img
+                      src="/hero-bg.png"
+                      alt="Multilingual learning and tutoring"
+                      className="h-full w-full rounded-3xl object-contain opacity-100 mix-blend-normal"
+                    />
+                  </picture>
                   <img
-                    src="/hero-bg.png"
-                    alt="Multilingual learning and tutoring"
-                    className="h-full w-full rounded-3xl object-contain opacity-100 mix-blend-normal"
+                    src="/hero-small-1.png"
+                    alt="Young learner in an online class"
+                    className="absolute left-2 bottom-4 h-20 w-28 rounded-2xl object-cover opacity-100 shadow-xl shadow-slate-900/20 sm:-left-10 sm:bottom-8 sm:h-24 sm:w-36 lg:-left-52 lg:bottom-14 lg:h-32 lg:w-52 lg:opacity-80"
                   />
-                </picture>
-                <img
-                  src="/hero-small-1.png"
-                  alt="Young learner in an online class"
-                  className="absolute -left-6 bottom-4 h-20 w-28 rounded-2xl object-cover opacity-100 shadow-xl shadow-slate-900/20 sm:-left-10 sm:bottom-8 sm:h-24 sm:w-36 lg:-left-52 lg:bottom-14 lg:h-32 lg:w-52 lg:opacity-80"
-                />
+                  <div
+                    className="pointer-events-none absolute left-2 bottom-4 hidden h-20 w-28 rounded-2xl bg-white/35 sm:-left-10 sm:bottom-8 sm:h-24 sm:w-36 lg:block lg:-left-52 lg:bottom-14 lg:h-32 lg:w-52"
+                    aria-hidden
+                  />
+                  <img
+                    src="/hero-small-2.png"
+                    alt="Tutor holding a tablet with multilingual greetings"
+                    className="absolute -left-2 top-3 h-20 w-28 rounded-2xl object-cover opacity-100 shadow-xl shadow-slate-900/20 sm:-left-4 sm:top-5 sm:h-24 sm:w-36 lg:-left-36 lg:top-8 lg:h-32 lg:w-52 lg:opacity-80"
+                  />
+                  <div
+                    className="pointer-events-none absolute -left-2 top-3 hidden h-20 w-28 rounded-2xl bg-white/35 sm:-left-4 sm:top-5 sm:h-24 sm:w-36 lg:block lg:-left-36 lg:top-8 lg:h-32 lg:w-52"
+                    aria-hidden
+                  />
+                </div>
+              ) : (
                 <div
-                  className="pointer-events-none absolute -left-6 bottom-4 hidden h-20 w-28 rounded-2xl bg-white/35 sm:-left-10 sm:bottom-8 sm:h-24 sm:w-36 lg:block lg:-left-52 lg:bottom-14 lg:h-32 lg:w-52"
+                  className="mx-auto w-full max-w-none aspect-[1/0.95] sm:max-w-sm sm:aspect-[3/4] lg:ml-auto lg:max-w-sm lg:aspect-[3/4] lg:translate-x-24"
                   aria-hidden
                 />
-                <img
-                  src="/hero-small-2.png"
-                  alt="Tutor holding a tablet with multilingual greetings"
-                  className="absolute -left-2 top-3 h-20 w-28 rounded-2xl object-cover opacity-100 shadow-xl shadow-slate-900/20 sm:-left-4 sm:top-5 sm:h-24 sm:w-36 lg:-left-36 lg:top-8 lg:h-32 lg:w-52 lg:opacity-80"
-                />
-                <div
-                  className="pointer-events-none absolute -left-2 top-3 hidden h-20 w-28 rounded-2xl bg-white/35 sm:-left-4 sm:top-5 sm:h-24 sm:w-36 lg:block lg:-left-36 lg:top-8 lg:h-32 lg:w-52"
-                  aria-hidden
-                />
-              </div>
+              )}
             </div>
 
           </div>
