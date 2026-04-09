@@ -258,6 +258,30 @@ const tutorPricingPlans: TutorPricingPlan[] = [
   },
 ]
 
+const requiredImageAssets = Array.from(
+  new Set(
+    [
+      '/logo.png',
+      '/hero-bg.png',
+      '/hero-bg-mobile.png',
+      '/hero-small-1.png',
+      '/hero-small-2.png',
+      '/social-instagram-default.png',
+      '/social-instagram.png',
+      '/social-linkedin-default.png',
+      '/social-linkedin.png',
+      '/social-facebook-default.png',
+      '/social-facebook.png',
+      featureTitleFallbackIcon,
+      ...hiringCompanies.map((company) => company.logo),
+      ...featureGroups.flatMap((group) => [group.backgroundImage, group.titleIcon, group.testimonial.avatar]),
+      ...trainingArticles.map((article) => article.image),
+      ...journeyJobSearchingImages.map((image) => image.src),
+      ...journeyHiringTalentImages.map((image) => image.src),
+    ].filter((src): src is string => Boolean(src)),
+  ),
+)
+
 function FeatureGroupSlideCard({ group, showTestimonial = true }: { group: FeatureGroup; showTestimonial?: boolean }) {
   const hasBackground = Boolean(group.backgroundImage)
   const [backgroundLoaded, setBackgroundLoaded] = useState(!group.backgroundImage)
@@ -403,6 +427,7 @@ function TrainingArticleCard({ article }: { article: TrainingArticle }) {
 
 export default function App() {
   const isTutorsPage = window.location.pathname === '/tutors'
+  const [appImagesReady, setAppImagesReady] = useState(false)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [isMobileViewport, setIsMobileViewport] = useState(window.innerWidth < 640)
   const [heroImagesReady, setHeroImagesReady] = useState(false)
@@ -475,6 +500,27 @@ export default function App() {
       cancelled = true
     }
   }, [isMobileViewport])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const preload = (src: string) =>
+      new Promise<boolean>((resolve) => {
+        const img = new Image()
+        img.onload = () => resolve(true)
+        img.onerror = () => resolve(false)
+        img.src = src
+      })
+
+    Promise.all(requiredImageAssets.map(preload)).then((results) => {
+      if (cancelled) return
+      setAppImagesReady(results.every(Boolean))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!isMobileNavOpen) return
@@ -583,6 +629,15 @@ export default function App() {
   const mobileDragOffsetPx = touchStartX !== null && touchCurrentX !== null ? touchCurrentX - touchStartX : 0
   const mobileSlideWidth = mobileSliderRef.current?.clientWidth ?? 1
   const mobileDragOffsetPercent = (mobileDragOffsetPx / mobileSlideWidth) * 100
+
+  if (!appImagesReady) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-slate-50 text-slate-700">
+        <p className="text-sm font-semibold uppercase tracking-[0.15em]">Loading Brilang assets...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <style>{`@keyframes ctaBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }`}</style>
