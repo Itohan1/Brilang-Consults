@@ -633,7 +633,10 @@ export default function App() {
   if (!appImagesReady) {
     return (
       <div className="grid min-h-screen place-items-center bg-slate-50 text-slate-700">
-        <p className="text-sm font-semibold uppercase tracking-[0.15em]">Loading Brilang assets...</p>
+        <span
+          className="h-12 w-12 animate-spin rounded-full border-4 border-slate-300 border-t-[#14118c]"
+          aria-label="Loading"
+        />
       </div>
     )
   }
